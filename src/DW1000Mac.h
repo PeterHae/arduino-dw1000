@@ -37,7 +37,7 @@
 #ifndef _DW1000MAC_H_INCLUDED
 #define _DW1000MAC_H_INCLUDED
 
-#include <Arduino.h>
+#include "arduinoToEfmPort.hpp"
 #include "DW1000Device.h" 
 
 class DW1000Device;

@@ -30,7 +30,7 @@
 #ifndef DW1000TIME_H
 #define DW1000TIME_H
 
-#include <Arduino.h>
+#include "arduinoToEfmPort.hpp"
 #include <stdint.h>
 #include <inttypes.h>
 #include "DW1000CompileOptions.h"

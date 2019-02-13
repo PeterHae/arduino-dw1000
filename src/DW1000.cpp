@@ -19,6 +19,7 @@
  */
 
 #include "DW1000.h"
+#include "math.h"
 
 DW1000Class DW1000;
 
@@ -26,9 +27,9 @@ DW1000Class DW1000;
  * #### Static member variables ##############################################
  * ######################################################################### */
 // pins
-uint8_t DW1000Class::_ss;
-uint8_t DW1000Class::_rst;
-uint8_t DW1000Class::_irq;
+Pin DW1000Class::_ss;
+Pin DW1000Class::_rst;
+Pin DW1000Class::_irq;
 
 
 // IRQ callbacks
@@ -115,14 +116,14 @@ void DW1000Class::end() {
 	SPI.end();
 }
 
-void DW1000Class::select(uint8_t ss) {
+void DW1000Class::select(Pin ss) {
 	reselect(ss);
 	// try locking clock at PLL speed (should be done already,
 	// but just to be sure)
 	enableClock(AUTO_CLOCK);
 	delay(5);
 	// reset chip (either soft or hard)
-	if(_rst != 0xff) {
+	if(!(_rst == Pin())) {
 		// dw1000 data sheet v2.08 §5.6.1 page 20, the RSTn pin should not be driven high but left floating.
 		pinMode(_rst, INPUT);
 	}
@@ -145,7 +146,7 @@ void DW1000Class::select(uint8_t ss) {
 	delay(5);
 	enableClock(AUTO_CLOCK);
 	delay(5);
-	
+
 	// read the temp and vbat readings from OTP that were recorded during production test
 	// see 6.3.1 OTP memory map
 	byte buf_otp[4];
@@ -155,22 +156,19 @@ void DW1000Class::select(uint8_t ss) {
 	_tmeas23C = buf_otp[0];
 }
 
-void DW1000Class::reselect(uint8_t ss) {
+void DW1000Class::reselect(Pin ss) {
 	_ss = ss;
 	pinMode(_ss, OUTPUT);
 	digitalWrite(_ss, HIGH);
 }
 
-void DW1000Class::begin(uint8_t irq, uint8_t rst) {
+void DW1000Class::begin(Pin irq, Pin rst) {
 	// generous initial init/wake-up-idle delay
 	delay(5);
 	// Configure the IRQ pin as INPUT. Required for correct interrupt setting for ESP8266
     	pinMode(irq, INPUT);
 	// start SPI
 	SPI.begin();
-#ifndef ESP8266
-	SPI.usingInterrupt(digitalPinToInterrupt(irq)); // not every board support this, e.g. ESP8266
-#endif
 	// pin and basic member setup
 	_rst        = rst;
 	_irq        = irq;
@@ -178,7 +176,7 @@ void DW1000Class::begin(uint8_t irq, uint8_t rst) {
 	// attach interrupt
 	//attachInterrupt(_irq, DW1000Class::handleInterrupt, CHANGE); // todo interrupt for ESP8266
 	// TODO throw error if pin is not a interrupt pin
-	attachInterrupt(digitalPinToInterrupt(_irq), DW1000Class::handleInterrupt, RISING); // todo interrupt for ESP8266
+	attachInterrupt(_irq, DW1000Class::handleInterrupt, RISING); // todo interrupt for ESP8266
 }
 
 void DW1000Class::manageLDE() {
@@ -301,7 +299,7 @@ void DW1000Class::spiWakeup(){
 
 
 void DW1000Class::reset() {
-	if(_rst == 0xff) {
+	if(_rst.pinNumber == 0xff) {
 		softReset();
 	} else {
 		// dw1000 data sheet v2.08 §5.6.1 page 20, the RSTn pin should not be driven high but left floating.
@@ -922,7 +920,7 @@ void DW1000Class::getTempAndVbat(float& temp, float& vbat) {
 	byte step5 = 0x00; writeBytes(TX_CAL, NO_SUB, &step5, 1);
 	byte sar_lvbat = 0; readBytes(TX_CAL, 0x03, &sar_lvbat, 1);
 	byte sar_ltemp = 0; readBytes(TX_CAL, 0x04, &sar_ltemp, 1);
-	
+
 	// calculate voltage and temperature
 	vbat = (sar_lvbat - _vmeas3v3) / 173.0f + 3.3f;
 	temp = (sar_ltemp - _tmeas23C) * 1.14f + 23.0f;
@@ -1221,9 +1219,9 @@ void DW1000Class::setPreambleCode(byte preacode) {
 
 void DW1000Class::setDefaults() {
 	if(_deviceMode == TX_MODE) {
-		
+
 	} else if(_deviceMode == RX_MODE) {
-		
+
 	} else if(_deviceMode == IDLE_MODE) {
 		useExtendedFrameLength(false);
 		useSmartPower(false);
@@ -1270,9 +1268,11 @@ void DW1000Class::setData(byte data[], uint16_t n) {
 }
 
 void DW1000Class::setData(const String& data) {
-	uint16_t n = data.length()+1;
+	uint16_t n = strlen(data) + 1;
 	byte* dataBytes = (byte*)malloc(n);
-	data.getBytes(dataBytes, n);
+	strncpy((char *)dataBytes, data, n);
+	dataBytes[n] = 0;
+
 	setData(dataBytes, n);
 	free(dataBytes);
 }
@@ -1311,7 +1311,7 @@ void DW1000Class::getData(String& data) {
 	byte* dataBytes = (byte*)malloc(n);
 	getData(dataBytes, n);
 	// clear string
-	data.remove(0);
+	//data.remove(0);
 	data  = "";
 	// append to string
 	for(i = 0; i < n; i++) {
@@ -1569,7 +1569,7 @@ float DW1000Class::getReceivePower() {
 void DW1000Class::setBit(byte data[], uint16_t n, uint16_t bit, boolean val) {
 	uint16_t idx;
 	uint8_t shift;
-	
+
 	idx = bit/8;
 	if(idx >= n) {
 		return; // TODO proper error handling: out of bounds
@@ -1596,14 +1596,14 @@ void DW1000Class::setBit(byte data[], uint16_t n, uint16_t bit, boolean val) {
 boolean DW1000Class::getBit(byte data[], uint16_t n, uint16_t bit) {
 	uint16_t idx;
 	uint8_t  shift;
-	
+
 	idx = bit/8;
 	if(idx >= n) {
 		return false; // TODO proper error handling: out of bounds
 	}
 	byte targetByte = data[idx];
 	shift = bit%8;
-	
+
 	return bitRead(targetByte, shift); // TODO wrong type returned byte instead of boolean
 }
 
@@ -1628,7 +1628,7 @@ void DW1000Class::readBytes(byte cmd, uint16_t offset, byte data[], uint16_t n) 
 	byte header[3];
 	uint8_t headerLen = 1;
 	uint16_t i = 0;
-	
+
 	// build SPI header
 	if(offset == NO_SUB) {
 		header[0] = READ | cmd;
@@ -1660,7 +1660,7 @@ void DW1000Class::readBytes(byte cmd, uint16_t offset, byte data[], uint16_t n) 
 // TODO why always 4 bytes? can be different, see p. 58 table 10 otp memory map
 void DW1000Class::readBytesOTP(uint16_t address, byte data[]) {
 	byte addressBytes[LEN_OTP_ADDR];
-	
+
 	// p60 - 6.3.3 Reading a value from OTP memory
 	// bytes of address
 	addressBytes[0] = (address & 0xFF);
@@ -1699,7 +1699,7 @@ void DW1000Class::writeBytes(byte cmd, uint16_t offset, byte data[], uint16_t da
 	byte header[3];
 	uint8_t  headerLen = 1;
 	uint16_t  i = 0;
-	
+
 	// TODO proper error handling: address out of bounds
 	// build SPI header
 	if(offset == NO_SUB) {

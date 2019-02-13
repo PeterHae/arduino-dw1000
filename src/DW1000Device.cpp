@@ -17,12 +17,15 @@
  * @file DW1000Device.cpp
  * Arduino global library (source file) working with the DW1000 library
  * for the Decawave DW1000 UWB transceiver IC.
- * 
+ *
  * @todo complete this class
  */
 
-#include "DW1000Device.h"
+#include "arduinoToEfmPort.hpp"
 #include "DW1000.h"
+#include "DW1000Device.h"
+
+#include "math.h"
 
 
 //Constructor and destructor
