@@ -16,7 +16,7 @@ static voidFunctionPtr interruptFunctions[MAX_ATTACHED_INTERRUPTS];
 
 Spi SPI = Spi(SPI_MODULE, Pin(SPI_PORT, SPI_SCLK_PIN), Pin(SPI_PORT, SPI_MISO_PIN), Pin(SPI_PORT, SPI_MOSI_PIN));
 
-void efmPortInit(){
+void arduinoToEfmPortInit(){
     UDELAY_Calibrate();
 
     // setup the wallclock timer for the millis function
@@ -185,19 +185,15 @@ void Spi::initSpi(){
 	init.databits = usartDatabits8;
 	init.msbf = true;
 	init.master = true;
-	init.clockMode = usartClockMode0;
+	init.clockMode = usartClockMode0; // CLKPOL = 0, CLKPHA = 0
 
 	USART_InitSync(usartUsed, &init);
 
-    // TODO check if that works?
-    // Module USART1 is configured to location 1
-    usartUsed->ROUTEPEN = (usartUsed->ROUTEPEN & ~ _USART_ROUTELOC0_MASK) | USART_ROUTELOC0_TXLOC_LOC1;
+    // TODO Location is HARDCODED right now...
 
-    // Enable signals TX, RX, CLK
-    usartUsed->ROUTEPEN |= USART_ROUTEPEN_TXPEN | USART_ROUTEPEN_RXPEN | USART_ROUTEPEN_CLKPEN;
-
-    usartUsed->CTRL |= USART_CTRL_CLKPOL;
-    usartUsed->CTRL |= USART_CTRL_CLKPHA;
+	usartUsed->ROUTEPEN = USART_ROUTEPEN_TXPEN | USART_ROUTEPEN_RXPEN | USART_ROUTEPEN_CLKPEN;
+	usartUsed->ROUTELOC0 = (usartUsed->ROUTELOC0 & ~(_USART_ROUTELOC0_TXLOC_MASK | _USART_ROUTELOC0_RXLOC_MASK | _USART_ROUTELOC0_CLKLOC_MASK ))
+							| 11 << _USART_ROUTELOC0_RXLOC_SHIFT | 11 << _USART_ROUTELOC0_TXLOC_SHIFT | 11 << _USART_ROUTELOC0_CLKLOC_SHIFT;
 }
 
 void bitSet(uint8_t& var, uint8_t pos){

@@ -126,7 +126,7 @@ public:
  * MUST BE CALLED BEFORE USAGE OF ANY FUNCTION IN THIS MODULE!
  *
  */
-void efmPortInit();
+void arduinoToEfmPortInit();
 
 /**
  * @brief Returns time since board start in milliseconds

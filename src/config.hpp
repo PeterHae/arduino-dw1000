@@ -1,11 +1,11 @@
 /**
  * @file config.hpp
  * @author Peter Härlen (peter@haerlen.net)
- * @brief 
+ * @brief
  * @date 2019-02-11
- * 
+ *
  * @copyright Copyright Peter Härlen
- * 
+ *
  */
 
 #pragma once
@@ -29,8 +29,8 @@
 #define INTERRUPT_PIN 3
 #define DW_INTERRUPT_NUM 0
 
-/// spi low baudrate 4MHz
-#define SPI_LOW_BAUDRATE 2000000
+/// spi low baudrate 2MHz
+#define SPI_LOW_BAUDRATE 2000000ULL
 
 /// spi high baudrate 16MHz
-#define SPI_HIGH_BAUDRATE 16000000
+#define SPI_HIGH_BAUDRATE 16000000ULL
