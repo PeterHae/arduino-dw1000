@@ -10,15 +10,30 @@
 
 #pragma once
 
-/// the SPI module to use
-#define SPI_MODULE USART1
+// the standard expansion hearder locations are used here. Can be changed though to meet you pin configuration
+#ifdef _SILICON_LABS_32B_SERIES_0
+    /// the SPI module to use
+    #define SPI_MODULE USART0
 
-/// SPI location defines (USART1 is used)
-#define SPI_PORT gpioPortC
-#define SPI_MOSI_PIN 6
-#define SPI_MISO_PIN 7
-#define SPI_SCLK_PIN 8
-#define SPI_CS_PIN 9
+    /// SPI location defines (USART1 is used)
+    #define SPI_PORT gpioPortE
+    #define SPI_MOSI_PIN 10
+    #define SPI_MISO_PIN 11
+    #define SPI_SCLK_PIN 12
+
+#else
+    /// the SPI module to use
+    #define SPI_MODULE USART1
+
+    /// SPI location defines (USART1 is used)
+    #define SPI_PORT gpioPortC
+    #define SPI_MOSI_PIN 6
+    #define SPI_MISO_PIN 7
+    #define SPI_SCLK_PIN 8
+    #define SPI_CS_PIN 9
+
+    #define USART_PIN_LOCATION 11
+#endif
 
 /// reset port and pin
 #define RESET_PORT gpioPortA

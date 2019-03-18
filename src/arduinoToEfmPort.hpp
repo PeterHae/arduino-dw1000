@@ -25,8 +25,7 @@
  */
 #include "rtcdrv_config.h"
 #ifndef EMDRV_RTCDRV_WALLCLOCK_CONFIG
-#print succes
-//#define EMDRV_RTCDRV_WALLCLOCK_CONFIG
+#define EMDRV_RTCDRV_WALLCLOCK_CONFIG
 #endif
 #include "rtcdriver.h"
 #include "em_usart.h"
@@ -104,20 +103,72 @@ public:
     SPISettings(uint32_t speed, uint8_t order, uint8_t mode);
 };
 
+/**
+ * @brief Class dor the arduino like SPI functionality
+ * 
+ */
 class Spi
 {
 private:
+    /// the USART module used for spi
     USART_TypeDef* usartUsed;
+
+    /// the clock pin
     Pin clk;
+
+    /// the miso pin
     Pin miso;
+
+    /// the mosi pin 
     Pin mosi;
+
+    /// the current configured spi speed
+    uint32_t speed;
+
+    /**
+     * @brief initializes the USART module for spi usage with the pins set
+     * 
+     */
     void initSpi();
 public:
+    /**
+     * @brief Construct a new Spi object
+     * 
+     * @param usartTo Use USART module to use
+     * @param clk clock pin
+     * @param miso MISO pin
+     * @param mosi MOSI pin
+     */
     Spi(USART_TypeDef* usartToUse, Pin clk, Pin miso, Pin mosi);
+    
+    /**
+     * @brief Construct a new Spi object, with no initialisation etc.
+     * 
+     */
+    Spi();
+
+    /**
+     * @brief only sets the speed right now. 
+     * 
+     * @param spiSettings 
+     */
     void beginTransaction(const SPISettings& spiSettings);
+
+    /**
+     * @brief Does an spi transfer.
+     * 
+     * @param val value to write
+     * @return uint8_t value read from the spi bus
+     */
     uint8_t transfer(uint8_t val);
+
+    /// arduino dummy
     void endTransaction();
+
+    /// arduino dummy
     void begin();
+    
+    /// arduino dummy
     void end();
 };
 

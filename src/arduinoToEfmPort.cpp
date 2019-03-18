@@ -14,7 +14,7 @@
 
 static voidFunctionPtr interruptFunctions[MAX_ATTACHED_INTERRUPTS];
 
-Spi SPI = Spi(SPI_MODULE, Pin(SPI_PORT, SPI_SCLK_PIN), Pin(SPI_PORT, SPI_MISO_PIN), Pin(SPI_PORT, SPI_MOSI_PIN));
+Spi SPI;
 
 void arduinoToEfmPortInit(){
     UDELAY_Calibrate();
@@ -22,16 +22,17 @@ void arduinoToEfmPortInit(){
     // setup the wallclock timer for the millis function
     RTCDRV_Init();
 
+    SPI = Spi(SPI_MODULE, Pin(SPI_PORT, SPI_SCLK_PIN), Pin(SPI_PORT, SPI_MISO_PIN), Pin(SPI_PORT, SPI_MOSI_PIN));
+
     // enable the gpio Interrupts
     NVIC_ClearPendingIRQ(GPIO_ODD_IRQn);
     NVIC_ClearPendingIRQ(GPIO_EVEN_IRQn);
     NVIC_EnableIRQ(GPIO_ODD_IRQn);
     NVIC_EnableIRQ(GPIO_EVEN_IRQn);
 
-    //SPI = Spi(SPI_MODULE, Pin(SPI_PORT, SPI_SCLK_PIN), Pin(SPI_PORT, SPI_MISO_PIN), Pin(SPI_PORT, SPI_MOSI_PIN));
-
     // seed the number generator
     // TODO srand((unsigned int)RTCDRV_GetWallClockTicks32());
+    srand(1);
 }
 
 uint32_t millis(){
@@ -139,7 +140,10 @@ uint8_t Spi::transfer(uint8_t val){
 
 void Spi::beginTransaction(const SPISettings& spiSettings){
     // only speeed funtion implemendet yet...
-    USART_BaudrateSyncSet(usartUsed, 0, spiSettings.speed);
+    if (this->speed != spiSettings.speed){
+        this -> speed = spiSettings.speed;
+        USART_BaudrateSyncSet(usartUsed, 0, spiSettings.speed);
+    }
 }
 
 Spi::Spi(USART_TypeDef* usartToUse, Pin clk, Pin miso, Pin mosi){
@@ -147,7 +151,13 @@ Spi::Spi(USART_TypeDef* usartToUse, Pin clk, Pin miso, Pin mosi){
     this->mosi = mosi;
     this->miso = miso;
     this->usartUsed = usartToUse;
+    this->speed = SPI_LOW_BAUDRATE;
     initSpi();
+}
+
+Spi::Spi(){
+    this->speed = SPI_LOW_BAUDRATE;
+    // TODO more?
 }
 
 void Spi::begin(){;}
@@ -181,7 +191,7 @@ void Spi::initSpi(){
 
     USART_Reset(usartUsed);
 
-	init.baudrate = SPI_LOW_BAUDRATE;
+	init.baudrate = speed;
 	init.databits = usartDatabits8;
 	init.msbf = true;
 	init.master = true;
@@ -190,10 +200,19 @@ void Spi::initSpi(){
 	USART_InitSync(usartUsed, &init);
 
     // TODO Location is HARDCODED right now...
+#ifdef _SILICON_LABS_32B_SERIES_0
+	usartUsed->ROUTE = USART_ROUTE_LOCATION_LOC0;
+				//| (usartUsed->ROUTE & ~_USART_ROUTE_LOCATION_MASK);
 
+	usartUsed->ROUTE |=
+					USART_ROUTE_TXPEN | USART_ROUTE_RXPEN | USART_ROUTE_CLKPEN;
+
+#else
 	usartUsed->ROUTEPEN = USART_ROUTEPEN_TXPEN | USART_ROUTEPEN_RXPEN | USART_ROUTEPEN_CLKPEN;
 	usartUsed->ROUTELOC0 = (usartUsed->ROUTELOC0 & ~(_USART_ROUTELOC0_TXLOC_MASK | _USART_ROUTELOC0_RXLOC_MASK | _USART_ROUTELOC0_CLKLOC_MASK ))
-							| 11 << _USART_ROUTELOC0_RXLOC_SHIFT | 11 << _USART_ROUTELOC0_TXLOC_SHIFT | 11 << _USART_ROUTELOC0_CLKLOC_SHIFT;
+							| USART_PIN_LOCATION << _USART_ROUTELOC0_RXLOC_SHIFT | USART_PIN_LOCATION << _USART_ROUTELOC0_TXLOC_SHIFT 
+                            | USART_PIN_LOCATION << _USART_ROUTELOC0_CLKLOC_SHIFT;
+#endif
 }
 
 void bitSet(uint8_t& var, uint8_t pos){
@@ -211,7 +230,7 @@ bool bitRead(uint8_t var, uint8_t pos){
 
 uint32_t random(uint32_t min, uint32_t max){
 	if(min == max){
-		return -1;
+		return max;
 	}
     int32_t range = max - min;
     return (rand() % range + 1) + min;
