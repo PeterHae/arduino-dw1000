@@ -73,8 +73,8 @@ struct Pin{
         pinNumber = pi;
     }
     Pin(){
-    	port = (GPIO_Port_TypeDef)99;
-    	pinNumber = 99;
+    	port = (GPIO_Port_TypeDef)0xff;
+    	pinNumber = 0xff;
     }
     bool operator==(const Pin& b){
     	if(b.port == this->port && b.pinNumber == this->pinNumber){
