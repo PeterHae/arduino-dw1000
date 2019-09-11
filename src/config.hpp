@@ -26,13 +26,16 @@
     #define SPI_MODULE USART1
 
     /// SPI location defines (USART1 is used)
-    #define SPI_PORT gpioPortC
-    #define SPI_MOSI_PIN 6
-    #define SPI_MISO_PIN 7
-    #define SPI_SCLK_PIN 8
+    #define SPI_PORT gpioPortB
+    #define SPI_MOSI_PIN 13
+    #define SPI_MISO_PIN 12
+    #define SPI_SCLK_PIN 11
     #define SPI_CS_PIN 9
 
-    #define USART_PIN_LOCATION 11
+    //#define USART_PIN_LOCATION 11
+	#define SPI_MISO_LOCATION 6
+	#define SPI_MOSI_LOCATION 8
+	#define SPI_CLK_LOCATION 4
 #endif
 
 /// reset port and pin
