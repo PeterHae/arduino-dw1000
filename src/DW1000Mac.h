@@ -44,6 +44,8 @@ class DW1000Device;
 
 class DW1000Mac {
 public:
+	enum FrameType:uint8_t{LONG, SHORT};
+
 	//Constructor and destructor
 	DW1000Mac(DW1000Device* parent);
 	DW1000Mac();
@@ -75,6 +77,13 @@ public:
 	void decodeBlinkFrame(byte frame[], byte address[], byte shortAddress[]);
 	void decodeShortMACFrame(byte frame[], byte address[]);
 	void decodeLongMACFrame(byte frame[], byte address[]);
+	void decodeShortMACFrame(byte frame[], byte sourceAddress[], byte destinationAddress[]);
+	void decodeLongMACFrame(byte frame[], byte sourceAddress[], byte destinationAddress[]);
+	// do we have or short or an long mac frame?
+	FrameType longOrShortMacFrame(byte frame[]);
+
+	// compare if addresses match
+	bool compareAdresses(byte a1[], byte a2[], FrameType);
 	
 	void incrementSeqNumber();
 
