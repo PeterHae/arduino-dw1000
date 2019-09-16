@@ -346,6 +346,13 @@ public:
 	// host-initiated reading of temperature and battery voltage
 	static void getTempAndVbat(float& temp, float& vbat);
 
+	/**
+	 * @brief Get the Short Address
+	 *
+	 * @return uint16_t short address
+	 */
+	uint16_t getShortAddress();
+
 	// transmission/reception bit rate
 	static constexpr byte TRX_RATE_110KBPS  = 0x00;
 	static constexpr byte TRX_RATE_850KBPS  = 0x01;

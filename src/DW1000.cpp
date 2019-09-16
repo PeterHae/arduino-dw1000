@@ -926,6 +926,12 @@ void DW1000Class::getTempAndVbat(float& temp, float& vbat) {
 	temp = (sar_ltemp - _tmeas23C) * 1.14f + 23.0f;
 }
 
+uint16_t DW1000Class::getShortAddress(){
+	byte data[LEN_PANADR];
+	readBytes(PANADR, NO_SUB, data, LEN_PANADR);
+	return (uint16_t)((data[1] << 8) | data[0]);
+}
+
 void DW1000Class::setEUI(char eui[]) {
 	byte eui_byte[LEN_EUI];
 	convertToByte(eui, eui_byte);
